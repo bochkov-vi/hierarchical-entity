@@ -20,13 +20,9 @@ import java.util.Collection;
  * @author bochkov
  */
 public class IExtractorId<T extends Persistable<ID>, ID extends Serializable> implements Function<T, ID> {
-    public static <T extends Persistable<ID>, ID extends Serializable> Collection<ID> extractIds(Iterable<T> iterable) {
-        return Collections2.filter(Collections2.transform(ImmutableSet.copyOf(iterable), new Function<T, ID>() {
 
-            public ID apply(T f) {
-                return f.getId();
-            }
-        }), Predicates.notNull());
+    public static <T extends Persistable<ID>, ID extends Serializable> Collection<ID> extractIds(Iterable<T> iterable) {
+        return Collections2.filter(Collections2.transform(ImmutableSet.copyOf(iterable), f -> f.getId()), Predicates.notNull());
     }
 
     public ID apply(T f) {

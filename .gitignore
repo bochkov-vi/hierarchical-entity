@@ -1,6 +1,11 @@
 # Created by .ignore support plugin (hsz.mobi)
 Будет удалено .idea/
 Будет удалено hierarchical-entity.iml
-Будет удалено src/main/resources/
-Будет удалено src/test/
 Будет удалено target/
+Будет удалено .idea/compiler.xml
+Будет удалено .idea/hierarchical-entity.iml
+Будет удалено .idea/libraries/
+Будет удалено .idea/misc.xml
+Будет удалено .idea/modules.xml
+Будет удалено .idea/workspace.xml
+/.idea/
