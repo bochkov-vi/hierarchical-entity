@@ -9,6 +9,7 @@ import java.util.List;
  * Created by home on 21.03.17.
  */
 public interface IParent<T extends IParent<T, ID>, ID extends Serializable> extends Persistable<ID> {
+
     List<T> getChilds();
 
     default void setChilds(List<T> parents) {
