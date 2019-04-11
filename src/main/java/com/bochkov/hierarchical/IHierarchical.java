@@ -12,25 +12,15 @@ import java.io.Serializable;
  * @author bochkov
  */
 public interface IHierarchical<ID extends Serializable, T extends IHierarchical<ID, T>> extends IParent<T, ID>, IChild<T, ID> {
-    default boolean isRealativeOf(Iterable<T> childs) {
-        return isParentOf(childs) || isChildOf(childs);
+
+    default boolean isRealativeOf(Iterable<T> candidates) {
+        return isParentOf(candidates) || isChildOf(candidates);
     }
 
-    default boolean isRealativeOf(T... childs) {
-        return isParentOf(childs) || isChildOf(childs);
+    default boolean isRealativeOf(T... candidates) {
+        return isParentOf(candidates) || isChildOf(candidates);
     }
 
-    //==========================
-
-
-
-   /* default boolean isRealativeOfId(Iterable<ID> childs) {
-        return isParentOfId(childs) || isChildOfId(childs);
-    }
-
-    default boolean isRealativeOfId(ID... childs) {
-        return isParentOfId(childs) || isChildOfId(childs);
-    }*/
 
 
 }

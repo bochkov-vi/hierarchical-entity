@@ -5,117 +5,253 @@
  */
 package com.bochkov.hierarchical;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import org.springframework.data.domain.Persistable;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.bochkov.hierarchical.StreamSupport.stream;
 
 /**
  * @author bochkov
  */
-public class Hierarchicals {
-
-    public static <ID extends Serializable, C extends IChild<C, ID>> boolean isChildOfId(final C child, Iterable<ID> parentIds) {
-        Iterable<C> iterable = new ParentIterable<C>(child);
-        return Iterables.any(iterable, input -> Iterables.contains(parentIds, input.getId()));
+public class Hierarchicals  {
+    public static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOfId(final P child, Stream<ID> parentIds) {
+        List<ID> list = stream(parentIds).collect(Collectors.toList());
+        return streamAllParentIds(child).anyMatch(childId -> list.contains(childId));
     }
 
-    public static <ID extends Serializable, P extends IParent<P, ID>> boolean isParentOfId(final P parent, Iterable<ID> childIds) {
-        Iterable<P> iterable = new ChildIterable<P>(parent);
-        return Iterables.any(iterable, input -> Iterables.contains(childIds, input.getId()));
+    static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOfId(final P child, Iterable<ID> parentIds) {
+        return isChildOfId(child, stream(parentIds));
     }
 
-    public static <ID extends Serializable, C extends IChild<C, ID>> boolean isChildOfId(final C child, ID... parentIds) {
-        return isChildOfId(child, new ImmutableList.Builder().add((Object[]) parentIds).build());
+    public static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOfId(final P child, ID... parentIds) {
+        return isChildOfId(child, stream(parentIds));
     }
 
-    public static <ID extends Serializable, C extends IParent<C, ID>> boolean isParentOfId(final C parent, ID... childIds) {
-        return isParentOfId(parent, Lists.newArrayList(childIds));
-    }
-
-    public static <C extends IChild<C, ?>> boolean isChildOf(C child, final Iterable<C> parents) {
-        Iterable<C> iterable = new ParentIterable<C>(child);
-        return Iterables.any(iterable, t -> parents != null && Iterables.contains(parents, t));
-    }
-
-    public static <C extends IChild<C, ?>> boolean isChildOf(C child, C... parents) {
-        return isChildOf(child, Lists.newArrayList(parents));
-    }
-
-    public static <P extends IParent<P, ?>> boolean isParentOf(P parent, final Iterable<P> childs) {
-        Iterable<P> iterable = new ChildIterable<P>(parent);
-        return Iterables.any(iterable, t -> childs != null && Iterables.contains(childs, t));
+    public static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOf(final P child, final Iterable<P> parents) {
+        return isChildOf(child, stream(parents));
 
     }
 
-    public static <P extends IParent<P, ?>> boolean isParentOf(P parent, P... childs) {
-        return isParentOf(parent, Lists.newArrayList(childs));
+    public static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOf(final P child, final Stream<P> parents) {
+        List<P> list = stream(parents).collect(Collectors.toList());
+        return streamAllParents(child).anyMatch(p -> list.contains(p));
+
     }
 
-    public static <P extends IParent> List<P> getAllChilds(Iterable<P> parents) {
-        return Lists.newArrayList(ChildIterable.create(parents));
+    public static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOf(P child, P... parents) {
+        return isChildOf(child, stream(parents));
     }
 
-    public static <H extends IParent> List<H> getAllChilds(H... parents) {
-        return getAllChilds(Lists.newArrayList(parents));
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<P> getAllParents(Iterable<P> childs) {
+        return stream(childs).flatMap(p -> streamAllParents(p)).collect(Collectors.toList());
     }
 
-    public static <C extends IChild<C, ?>> List<C> getAllParents(Iterable<C> childs) {
-        return Lists.newArrayList(ImmutableSet.copyOf(ParentIterable.create(childs)));
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<P> getAllParents(Stream<P> childs) {
+        return streamAllParents(childs).collect(Collectors.toList());
     }
 
-    public static <C extends IChild<C, ?>> List<C> getAllParents(C... childs) {
-        return getAllParents(Lists.newArrayList(childs));
+    public static <P extends IChild> List<P> getAllParents(P... childs) {
+        return getAllParents(stream(childs));
+
     }
 
-    public static <H extends IParent<H, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(Iterable<H> parent) {
-        return IExtractorId.extractIds(ChildIterable.create(parent));
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(Stream<P> childs) {
+        return childs.flatMap(p -> streamAllParents(p)).map(Persistable::getId).collect(Collectors.toList());
     }
 
-    public static <H extends IChild<H, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(Iterable<H> child) {
-        return IExtractorId.extractIds(ParentIterable.create(child));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(Iterable<P> childs) {
+        return getAllParentIds(java.util.stream.StreamSupport.stream(childs.spliterator(), true));
     }
 
-    public static <H extends IParent<H, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(H... parent) {
-        return IExtractorId.extractIds(ChildIterable.create(parent));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(P... childs) {
+        return getAllParentIds(stream(childs));
     }
 
-    public static <H extends IChild<H, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(H... child) {
-        return IExtractorId.extractIds(ParentIterable.create(child));
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<P> streamAllParents(boolean includeOriginal, Stream<P> childs) {
+        if (includeOriginal) {
+            return stream(childs).flatMap(child -> Stream.concat(stream(child), streamAllParents(child)));
+        } else {
+            return stream(childs).flatMap(child -> stream(child.getParents()));
+        }
     }
 
-    public static <H extends IParent<H, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(boolean includeOriginal, Iterable<H> parent) {
-        return IExtractorId.extractIds(ChildIterable.create(includeOriginal, parent));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<P> streamAllParents(boolean includeOriginal, Iterable<P> childs) {
+        return streamAllParents(includeOriginal, stream(childs));
     }
 
-    public static <H extends IChild<H, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(boolean includeOriginal, Iterable<H> child) {
-        return IExtractorId.extractIds(ParentIterable.create(includeOriginal, child));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<P> streamAllParents(boolean includeOriginal, P... childs) {
+        return streamAllParents(includeOriginal, stream(childs));
     }
 
-    public static <H extends IParent<H, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(boolean includeOriginal, H... parent) {
-        return IExtractorId.extractIds(ChildIterable.create(includeOriginal, parent));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<P> streamAllParents(Stream<P> childs) {
+        return streamAllParents(false, stream(childs));
     }
 
-    public static <H extends IChild<H, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(boolean includeOriginal, H... child) {
-        return IExtractorId.extractIds(ParentIterable.create(includeOriginal, child));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<P> streamAllParents(Iterable<P> childs) {
+        return streamAllParents(false, stream(childs));
     }
 
-    public static <H extends IParent<H, ?>> List<H> getAllChilds(boolean includeOriginal, Iterable<H> parents) {
-        return Lists.newArrayList(ImmutableSet.copyOf(ChildIterable.create(includeOriginal, parents)));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<P> streamAllParents(P... childs) {
+        return streamAllParents(false, stream(childs));
     }
 
-    public static <H extends IParent<H, ?>> List<H> getAllChilds(boolean includeOriginal, H... parents) {
-        return getAllChilds(includeOriginal, Lists.newArrayList(parents));
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<ID> streamAllParentIds(Stream<P> childs) {
+        return streamAllParents(false, childs).map(Persistable::getId);
     }
 
-    public static <C extends IChild<C, ?>> List<C> getAllParents(boolean includeOriginal, Iterable<C> childs) {
-        return Lists.newArrayList(ImmutableSet.copyOf(ParentIterable.create(includeOriginal, childs)));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<ID> streamAllParentIds(Iterable<P> childs) {
+        return streamAllParents(false, childs).map(Persistable::getId);
     }
 
-    public static <C extends IChild<C, ?>> List<C> getAllParents(boolean includeOriginal, C... childs) {
-        return getAllParents(includeOriginal, Lists.newArrayList(childs));
+    public static <P extends IChild<P, ID>, ID extends Serializable> Stream<ID> streamAllParentIds(P... childs) {
+        return streamAllParents(false, childs).map(Persistable::getId);
+    }
+
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(
+            boolean includeOriginal, Iterable<P> childs) {
+        return streamAllParents(includeOriginal, childs).map(Persistable::getId).collect(Collectors.toList());
+    }
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(
+            boolean includeOriginal, P... child) {
+        return streamAllParents(includeOriginal, child).map(Persistable::getId).collect(Collectors.toList());
+    }
+
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<P> getAllParents(
+            boolean includeOriginal, Iterable<P> childs) {
+        return streamAllParents(includeOriginal, childs).collect(Collectors.toList());
+    }
+
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<P> getAllParents(
+            boolean includeOriginal, P... childs) {
+        return streamAllParents(includeOriginal, childs).collect(Collectors.toList());
+    }
+
+//=======================================================================
+    public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOfId(final P parent, Stream<ID> childIds) {
+        List<ID> list = stream(childIds).collect(Collectors.toList());
+        return streamAllChildIds(parent).anyMatch(parentId -> list.contains(parentId));
+    }
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOfId(final P parent, Iterable<ID> childIds) {
+        return isParentOfId(parent, stream(childIds));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOfId(final P parent, ID... childIds) {
+        return isParentOfId(parent, stream(childIds));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOf(final P parent, final Iterable<P> childs) {
+        return isParentOf(parent, stream(childs));
+
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOf(final P parent, final Stream<P> childs) {
+        List<P> list = stream(childs).collect(Collectors.toList());
+        return streamAllChilds(parent).anyMatch(p -> list.contains(p));
+
+    }
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOf(P parent, P... childs) {
+        return isParentOf(parent, stream(childs));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> List<P> getAllChilds(Iterable<P> parents) {
+        return stream(parents).flatMap(p -> streamAllChilds(p)).collect(Collectors.toList());
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> List<P> getAllChilds(Stream<P> parents) {
+        return streamAllChilds(parents).collect(Collectors.toList());
+    }
+
+    public  static <P extends IParent> List<P> getAllChilds(P... parents) {
+        return getAllChilds(stream(parents));
+
+    }
+
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(Stream<P> parents) {
+        return parents.flatMap(p -> streamAllChilds(p)).map(Persistable::getId).collect(Collectors.toList());
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(Iterable<P> parents) {
+        return getAllChildIds(java.util.stream.StreamSupport.stream(parents.spliterator(), true));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(P... parents) {
+        return getAllChildIds(stream(parents));
+    }
+
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(boolean includeOriginal, Stream<P> parents) {
+        if (includeOriginal) {
+            return stream(parents).flatMap(parent -> Stream.concat(stream(parent), streamAllChilds(parent)));
+        } else {
+            return stream(parents).flatMap(parent -> stream(parent.getChilds()));
+        }
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(boolean includeOriginal, Iterable<P> parents) {
+        return streamAllChilds(includeOriginal, stream(parents));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(boolean includeOriginal, P... parents) {
+        return streamAllChilds(includeOriginal, stream(parents));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(Stream<P> parents) {
+        return streamAllChilds(false, stream(parents));
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(Iterable<P> parents) {
+        return streamAllChilds(false, stream(parents));
+    }
+
+    public   static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(P... parents) {
+        return streamAllChilds(false, stream(parents));
+    }
+
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(Stream<P> parents) {
+        return streamAllChilds(false, parents).map(Persistable::getId);
+    }
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(Iterable<P> parents) {
+        return streamAllChilds(false, parents).map(Persistable::getId);
+    }
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(P... parents) {
+        return streamAllChilds(false, parents).map(Persistable::getId);
+    }
+
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(
+            boolean includeOriginal, Iterable<P> parents) {
+        return streamAllChilds(includeOriginal, parents).map(Persistable::getId).collect(Collectors.toList());
+    }
+
+    public  static <P extends IParent<P, ID>, ID extends Serializable> Iterable<ID> getAllChildIds(
+            boolean includeOriginal, P... parent) {
+        return streamAllChilds(includeOriginal, parent).map(Persistable::getId).collect(Collectors.toList());
+    }
+
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> List<P> getAllChilds(
+            boolean includeOriginal, Iterable<P> parents) {
+        return streamAllChilds(includeOriginal, parents).collect(Collectors.toList());
+    }
+
+    public static <P extends IParent<P, ID>, ID extends Serializable> List<P> getAllChilds(
+            boolean includeOriginal, P... parents) {
+        return streamAllChilds(includeOriginal, parents).collect(Collectors.toList());
     }
 }
