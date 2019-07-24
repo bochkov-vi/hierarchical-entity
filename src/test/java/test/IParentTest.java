@@ -8,8 +8,16 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 public class IParentTest extends BaseHierarchicalTest {
 
+
+    @Test
+    public void testGetParentsByStatic() {
+        List<Hierarchical> childs = Hierarchicals.getAllChilds(true,h1);
+        Assert.assertNotNull(childs);
+    }
 
     @Test
     public void setChilds() {

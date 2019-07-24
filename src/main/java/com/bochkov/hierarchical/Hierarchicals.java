@@ -17,7 +17,8 @@ import static com.bochkov.hierarchical.StreamSupport.stream;
 /**
  * @author bochkov
  */
-public class Hierarchicals  {
+public class Hierarchicals {
+
     public static <P extends IChild<P, ID>, ID extends Serializable> boolean isChildOfId(final P child, Stream<ID> parentIds) {
         List<ID> list = stream(parentIds).collect(Collectors.toList());
         return streamAllParentIds(child).anyMatch(childId -> list.contains(childId));
@@ -60,15 +61,15 @@ public class Hierarchicals  {
     }
 
 
-    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(Stream<P> childs) {
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<ID> getAllParentIds(Stream<P> childs) {
         return childs.flatMap(p -> streamAllParents(p)).map(Persistable::getId).collect(Collectors.toList());
     }
 
-    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(Iterable<P> childs) {
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<ID> getAllParentIds(Iterable<P> childs) {
         return getAllParentIds(java.util.stream.StreamSupport.stream(childs.spliterator(), true));
     }
 
-    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(P... childs) {
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<ID> getAllParentIds(P... childs) {
         return getAllParentIds(stream(childs));
     }
 
@@ -77,7 +78,7 @@ public class Hierarchicals  {
         if (includeOriginal) {
             return stream(childs).flatMap(child -> Stream.concat(stream(child), streamAllParents(child)));
         } else {
-            return stream(childs).flatMap(child -> stream(child.getParents()));
+            return stream(childs).flatMap(child -> streamAllParents(true, child.getParents()));
         }
     }
 
@@ -115,12 +116,12 @@ public class Hierarchicals  {
     }
 
 
-    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<ID> getAllParentIds(
             boolean includeOriginal, Iterable<P> childs) {
         return streamAllParents(includeOriginal, childs).map(Persistable::getId).collect(Collectors.toList());
     }
 
-    public static <P extends IChild<P, ID>, ID extends Serializable> Iterable<ID> getAllParentIds(
+    public static <P extends IChild<P, ID>, ID extends Serializable> List<ID> getAllParentIds(
             boolean includeOriginal, P... child) {
         return streamAllParents(includeOriginal, child).map(Persistable::getId).collect(Collectors.toList());
     }
@@ -136,13 +137,13 @@ public class Hierarchicals  {
         return streamAllParents(includeOriginal, childs).collect(Collectors.toList());
     }
 
-//=======================================================================
+    //=======================================================================
     public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOfId(final P parent, Stream<ID> childIds) {
         List<ID> list = stream(childIds).collect(Collectors.toList());
         return streamAllChildIds(parent).anyMatch(parentId -> list.contains(parentId));
     }
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOfId(final P parent, Iterable<ID> childIds) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOfId(final P parent, Iterable<ID> childIds) {
         return isParentOfId(parent, stream(childIds));
     }
 
@@ -161,7 +162,7 @@ public class Hierarchicals  {
 
     }
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOf(P parent, P... childs) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> boolean isParentOf(P parent, P... childs) {
         return isParentOf(parent, stream(childs));
     }
 
@@ -173,7 +174,7 @@ public class Hierarchicals  {
         return streamAllChilds(parents).collect(Collectors.toList());
     }
 
-    public  static <P extends IParent> List<P> getAllChilds(P... parents) {
+    public static <P extends IParent> List<P> getAllChilds(P... parents) {
         return getAllChilds(stream(parents));
 
     }
@@ -192,11 +193,11 @@ public class Hierarchicals  {
     }
 
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(boolean includeOriginal, Stream<P> parents) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(boolean includeOriginal, Stream<P> parents) {
         if (includeOriginal) {
             return stream(parents).flatMap(parent -> Stream.concat(stream(parent), streamAllChilds(parent)));
         } else {
-            return stream(parents).flatMap(parent -> stream(parent.getChilds()));
+            return stream(parents).flatMap(parent -> streamAllChilds(true, parent.getChilds()));
         }
     }
 
@@ -216,20 +217,20 @@ public class Hierarchicals  {
         return streamAllChilds(false, stream(parents));
     }
 
-    public   static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(P... parents) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<P> streamAllChilds(P... parents) {
         return streamAllChilds(false, stream(parents));
     }
 
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(Stream<P> parents) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(Stream<P> parents) {
         return streamAllChilds(false, parents).map(Persistable::getId);
     }
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(Iterable<P> parents) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(Iterable<P> parents) {
         return streamAllChilds(false, parents).map(Persistable::getId);
     }
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(P... parents) {
+    public static <P extends IParent<P, ID>, ID extends Serializable> Stream<ID> streamAllChildIds(P... parents) {
         return streamAllChilds(false, parents).map(Persistable::getId);
     }
 
@@ -239,7 +240,7 @@ public class Hierarchicals  {
         return streamAllChilds(includeOriginal, parents).map(Persistable::getId).collect(Collectors.toList());
     }
 
-    public  static <P extends IParent<P, ID>, ID extends Serializable> List<ID> getAllChildIds(
+    public static <P extends IParent<P, ID>, ID extends Serializable> List<ID> getAllChildIds(
             boolean includeOriginal, P... parent) {
         return streamAllChilds(includeOriginal, parent).map(Persistable::getId).collect(Collectors.toList());
     }
