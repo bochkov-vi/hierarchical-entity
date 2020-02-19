@@ -170,6 +170,9 @@ public class Hierarchicals {
         return stream(parents).flatMap(p -> streamAllChilds(p)).collect(Collectors.toList());
     }
 
+
+
+
     public static <P extends IParent<P, ID>, ID extends Serializable> List<P> getAllChilds(Stream<P> parents) {
         return streamAllChilds(parents).collect(Collectors.toList());
     }
