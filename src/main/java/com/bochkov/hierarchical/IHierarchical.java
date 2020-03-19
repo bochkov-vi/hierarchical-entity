@@ -21,6 +21,13 @@ public interface IHierarchical<ID extends Serializable, T extends IHierarchical<
         return isParentOf(candidates) || isChildOf(candidates);
     }
 
+    default boolean isRealativeOfId(Iterable<ID> candidates) {
+        return isParentOfId(candidates) || isChildOfId(candidates);
+    }
+
+    default boolean isRealativeOfId(ID... candidates) {
+        return isParentOfId(candidates) || isChildOfId(candidates);
+    }
 
 
 }
