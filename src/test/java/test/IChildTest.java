@@ -45,14 +45,14 @@ public class IChildTest extends BaseHierarchicalTest {
     @Test
     public void getAllChilds() {
         Assert.assertFalse(h1.getAllChilds().isEmpty());
-        Assert.assertTrue(h1.getAllChilds().size()==2);
+        Assert.assertTrue(h1.getAllChilds().size()==4);
     }
 
 
     @Test
     public void getAllChildsAndThis() {
         Assert.assertFalse(h1.getAllChilds().isEmpty());
-        Assert.assertTrue(h1.getAllChildsAndThis().size()==3);
+        Assert.assertTrue(h1.getAllChildsAndThis().size()==5);
     }
 
     @Test
