@@ -18,7 +18,7 @@ public interface IChild<T extends IChild<T, ID>, ID extends Serializable> extend
     List<T> getParents();
 
     default T setParents(List<T> parents) {
-        throw new UnsupportedOperationException(getClass().getName() + " method setChilds not supported");
+        throw new UnsupportedOperationException(getClass().getName() + " method setParents not supported");
     }
     default T setParents(T... parents) {
         return setParents(Lists.newArrayList(parents));
